@@ -4,7 +4,10 @@ from datetime import datetime
 import os
 from telegram_notifier import send_telegram_message
 
-SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "LTCUSDT"]
+def get_usdt_symbols():
+    url = "https://fapi.binance.com/fapi/v1/ticker/price"
+    r = requests.get(url).json()
+    return [item["symbol"] for item in r if item["symbol"].endswith("USDT")]
 
 def get_binance_price(symbol):
     url = f"https://fapi.binance.com/fapi/v1/ticker/price?symbol={symbol}"
@@ -21,17 +24,17 @@ def get_open_interest(symbol):
 
 def collect_data():
     now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    symbols = get_usdt_symbols()
     rows = []
 
-    for symbol in SYMBOLS:
+    for symbol in symbols:
         try:
             price = get_binance_price(symbol)
             fr = get_funding_rate(symbol)
             oi = get_open_interest(symbol)
             rows.append([now, symbol, price, fr, oi])
-            send_telegram_message(f"✅ [{symbol}] Price: {price:.2f}, FR: {fr:.5f}, OI: {oi:.2f}")
         except Exception as e:
-            send_telegram_message(f"❌ HATA [{symbol}]: {e}")
+            send_telegram_message(f"❌ {symbol} Hatası: {e}")
 
     df = pd.DataFrame(rows, columns=["timestamp", "symbol", "price", "funding_rate", "open_interest"])
     file_path = "data/market_data.csv"
