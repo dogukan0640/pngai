@@ -1,13 +1,10 @@
 import time
 import schedule
 from data_logger import collect_data
-from predictor import make_prediction
 from telegram_notifier import send_telegram_message
 
 def job():
     collect_data()
-    prediction = make_prediction()
-    send_telegram_message(f"🤖 Tahmin: {prediction}")
 
 def start():
     send_telegram_message("📡 Render AI Bot Başladı.")
